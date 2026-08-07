@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "react-perf", "nextjs", "jsx-a11y", "import"],
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    // Not needed with the automatic JSX runtime.
+    "react/react-in-jsx-scope": "off",
+    // Global CSS is imported for its side effects.
+    "import/no-unassigned-import": "off"
+  },
+  "ignorePatterns": [".next", "out", "build", "next-env.d.ts"]
+}

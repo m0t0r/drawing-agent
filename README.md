@@ -1,159 +1,64 @@
-# Turborepo starter
+# drawing-agent
 
-This Turborepo starter is maintained by the Turborepo core team.
+Turborepo monorepo for the drawing-agent project. It currently holds a single Next.js app plus a shared TypeScript config package — the application itself is still the starting scaffold.
 
-## Using this example
+## Requirements
 
-Run the following command:
+- Node 24 (the repo's `@types/node` tracks that major; `engines` permits >= 18)
+- pnpm 9 (pinned via `packageManager`)
 
 ```sh
-npx create-turbo@latest
+pnpm install
 ```
 
-## What's inside?
+## Layout
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
+```
+apps/
+  web/                  Next.js 16 App Router app — React 19, Tailwind CSS 4, React Compiler
+packages/
+  typescript-config/    Shared tsconfig bases (@repo/typescript-config)
 ```
 
-Without global `turbo`, use your package manager:
+Workspaces are `apps/*` and `packages/*`. Shared packages are unbuilt: apps consume them as `workspace:*` and import their source directly.
+
+## Commands
+
+Run from the repo root — Turborepo fans each task out across the workspace.
+
+| Command             | What it does                                                |
+| ------------------- | ----------------------------------------------------------- |
+| `pnpm dev`          | Start all apps in watch mode (web on http://localhost:3000) |
+| `pnpm build`        | Production build                                            |
+| `pnpm lint`         | oxlint                                                      |
+| `pnpm check-types`  | `next typegen` + `tsc --noEmit`                             |
+| `pnpm format`       | oxfmt, rewriting files in place                             |
+| `pnpm format:check` | oxfmt in check mode, for CI                                 |
+
+Scope any task to one package with a filter:
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
 pnpm exec turbo dev --filter=web
 ```
 
-### Remote Caching
+Package-local scripts also work from inside `apps/web`.
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+No test runner is set up yet.
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+## Toolchain
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+| Concern             | Tool                                  |
+| ------------------- | ------------------------------------- |
+| Build orchestration | Turborepo 2                           |
+| Language            | TypeScript 7 (the native Go compiler) |
+| Linting             | oxlint                                |
+| Formatting          | oxfmt                                 |
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Linting and formatting are entirely [oxc](https://oxc.rs) — ESLint and Prettier were both removed. oxlint is configured per app (`apps/web/.oxlintrc.json`); oxfmt is configured once at the root (`.oxfmtrc.json`) and runs repo-wide, honouring `.gitignore`.
 
-```sh
-cd my-turborepo
-turbo login
-```
+Two constraints worth knowing before changing versions:
 
-Without global `turbo`, use your package manager:
+- **TypeScript 7 ships no JavaScript compiler API.** Any tool that consumes the TypeScript API programmatically — typescript-eslint, ts-jest, ts-morph — cannot be added until the API returns in 7.1. Nothing in the repo depends on it today.
+- **oxfmt is pre-1.0.** Its output can change between minor releases, so bump it in its own commit to keep repo-wide reformatting out of feature diffs.
 
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+`CLAUDE.md` carries the same context in more detail, for coding agents.
