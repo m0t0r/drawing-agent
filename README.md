@@ -54,7 +54,7 @@ No test runner is set up yet.
 | Language            | TypeScript 7 (the native Go compiler)        |
 | Linting             | oxlint                                       |
 | Formatting          | oxfmt                                        |
-| UI components       | shadcn/ui (Base UI primitives, `nova` style) |
+| UI components       | shadcn/ui (Base UI primitives, `vega` style) |
 
 Linting and formatting are entirely [oxc](https://oxc.rs) — ESLint and Prettier were both removed. oxlint is configured per package (`apps/web/.oxlintrc.json`, `packages/design-system/.oxlintrc.json`); oxfmt is configured once at the root (`.oxfmtrc.json`) and runs repo-wide, honouring `.gitignore`.
 
