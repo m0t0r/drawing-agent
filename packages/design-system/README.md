@@ -5,7 +5,7 @@ The workspace's UI layer: [shadcn/ui](https://ui.shadcn.com) components and the 
 ## Layout
 
 ```
-components.json         shadcn CLI config (style base-nova, Base UI primitives, lucide icons)
+components.json         shadcn CLI config (style base-vega, Base UI primitives, lucide icons)
 postcss.config.mjs      Shared PostCSS config; apps/web re-exports it
 src/
   components/           shadcn primitives, one file per registry item
@@ -34,17 +34,23 @@ The `@source` line is not optional — Tailwind v4 scans the importing project's
 
 ## Adding components
 
-Run the CLI against this package, never against the app:
-
 ```sh
 pnpm dlx shadcn@latest add <component> -c packages/design-system
 ```
 
-Note that `shadcn init` and `shadcn apply` refuse to run here — they check for a supported framework and this package has none. `components.json` and the token block in `src/styles/globals.css` are therefore maintained by hand; regenerate tokens by initializing a throwaway Next project with the same preset and copying the result.
+**Presets and themes are applied from the app, not from here:**
+
+```sh
+pnpm dlx shadcn@latest apply <preset-code> -c apps/web
+```
+
+`init` and `apply` refuse to run against this package — they glob the working directory for a framework config file (`next.config.*`, `vite.config.*`, `astro.config.*`, `composer.json`, …) and a UI package has none, so detection falls through to `manual` and the command exits. `add` skips that check, which is why it works here.
+
+Running from `apps/web` satisfies the check via its `next.config.ts`, and `apps/web/components.json` resolves `ui`, `utils`, and the Tailwind CSS file into this package, so the writes still land in the right place. `apply` updates both `components.json` files and rewrites the fonts in `apps/web/app/layout.tsx`. It also drops a duplicate `cn()` at `apps/web/lib/utils.ts` — delete it; the app's `utils` alias already points here.
 
 ## Theme
 
-`src/styles/globals.css` carries the `base-nova` token set (`:root` for light, `.dark` for dark) plus three imports: `tailwindcss`, `tw-animate-css`, and `shadcn/tailwind.css`. That last one ships the `scroll-fade` and `shimmer` utilities the chat primitives depend on.
+`src/styles/globals.css` carries the token set from preset `b1Z6CCvHU` — style `vega`, base colour `zinc`, `cyan` theme, `blue` charts — as `:root` for light and `.dark` for dark, plus three imports: `tailwindcss`, `tw-animate-css`, and `shadcn/tailwind.css`. That last one ships the `scroll-fade` and `shimmer` utilities the chat primitives depend on.
 
 Dark mode is class-based (`@custom-variant dark (&:is(.dark *))`) and nothing toggles the class yet, so the app renders light-only.
 

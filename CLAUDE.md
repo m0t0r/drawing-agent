@@ -22,7 +22,7 @@ No test runner is configured yet.
 ## Structure
 
 - `apps/web` — Next.js 16 App Router, React 19, Tailwind CSS 4, React Compiler. The only app.
-- `packages/design-system` — shadcn/ui components and the Tailwind theme, as `@repo/design-system`. See its README before touching it; the short version is that `src/components/*.tsx` is vendored registry output (`shadcn add` overwrites it), hand-written compositions go in subdirectories, and `shadcn init`/`apply` refuse to run against the package because it has no framework.
+- `packages/design-system` — shadcn/ui components and the Tailwind theme, as `@repo/design-system`. See its README before touching it; the short version is that `src/components/*.tsx` is vendored registry output (`shadcn add` overwrites it) and hand-written compositions go in subdirectories. `shadcn add -c packages/design-system` works, but `init`/`apply` refuse to run there — they glob the cwd for a framework config file and the package has none — so run those with `-c apps/web`, whose `components.json` resolves `ui`/`utils`/css back into the package.
 - `packages/typescript-config` — base tsconfigs exported as `@repo/typescript-config/{base,nextjs,react-library}.json`; app tsconfigs `extends` these.
 
 Workspace globs are `apps/*` and `packages/*` (pnpm workspaces, pnpm 9). Shared packages are consumed as `workspace:*` deps and are unbuilt — apps import their source directly, so a new shared package needs an `exports` map pointing at source files and `"type": "module"`. Next also needs the package in `transpilePackages`, and the app tsconfig needs a matching `paths` entry.
