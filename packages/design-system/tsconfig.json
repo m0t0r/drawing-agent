@@ -1,0 +1,18 @@
+{
+  "extends": "@repo/typescript-config/react-library.json",
+  "compilerOptions": {
+    // The package ships source, not build output: apps import the `.tsx` files
+    // directly through the `exports` map, so there is nothing to emit and the
+    // resolver has to behave like the bundler that actually consumes it.
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@repo/design-system/*": ["./src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules"]
+}

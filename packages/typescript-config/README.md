@@ -19,4 +19,4 @@ Add the workspace dependency, then extend:
 }
 ```
 
-`react-library.json` currently has no consumer — it's kept for the first shared React package.
+`react-library.json` is used by `@repo/design-system`. That package ships source rather than build output, so it overrides `moduleResolution`/`module` to `Bundler`/`ESNext` and turns off `declaration` — the inherited `NodeNext` + `declaration` defaults here suit a package that actually emits.

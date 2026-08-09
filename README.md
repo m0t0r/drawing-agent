@@ -1,6 +1,6 @@
 # drawing-agent
 
-Turborepo monorepo for the drawing-agent project. It currently holds a single Next.js app plus a shared TypeScript config package — the application itself is still the starting scaffold.
+Turborepo monorepo for the drawing-agent project. It holds a single Next.js app — an Excalidraw canvas with a chat panel beside it — plus a shared design system and a shared TypeScript config package. There is no model behind the chat yet; sending a prompt draws a labelled box.
 
 ## Requirements
 
@@ -17,6 +17,7 @@ pnpm install
 apps/
   web/                  Next.js 16 App Router app — React 19, Tailwind CSS 4, React Compiler
 packages/
+  design-system/        shadcn/ui components + the Tailwind theme (@repo/design-system)
   typescript-config/    Shared tsconfig bases (@repo/typescript-config)
 ```
 
@@ -47,14 +48,15 @@ No test runner is set up yet.
 
 ## Toolchain
 
-| Concern             | Tool                                  |
-| ------------------- | ------------------------------------- |
-| Build orchestration | Turborepo 2                           |
-| Language            | TypeScript 7 (the native Go compiler) |
-| Linting             | oxlint                                |
-| Formatting          | oxfmt                                 |
+| Concern             | Tool                                         |
+| ------------------- | -------------------------------------------- |
+| Build orchestration | Turborepo 2                                  |
+| Language            | TypeScript 7 (the native Go compiler)        |
+| Linting             | oxlint                                       |
+| Formatting          | oxfmt                                        |
+| UI components       | shadcn/ui (Base UI primitives, `nova` style) |
 
-Linting and formatting are entirely [oxc](https://oxc.rs) — ESLint and Prettier were both removed. oxlint is configured per app (`apps/web/.oxlintrc.json`); oxfmt is configured once at the root (`.oxfmtrc.json`) and runs repo-wide, honouring `.gitignore`.
+Linting and formatting are entirely [oxc](https://oxc.rs) — ESLint and Prettier were both removed. oxlint is configured per package (`apps/web/.oxlintrc.json`, `packages/design-system/.oxlintrc.json`); oxfmt is configured once at the root (`.oxfmtrc.json`) and runs repo-wide, honouring `.gitignore`.
 
 Two constraints worth knowing before changing versions:
 
