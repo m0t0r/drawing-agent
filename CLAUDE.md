@@ -22,17 +22,20 @@ No test runner is configured yet.
 ## Structure
 
 - `apps/web` — Next.js 16 App Router, React 19, Tailwind CSS 4, React Compiler. The only app.
+- `packages/design-system` — shadcn/ui components and the Tailwind theme, as `@repo/design-system`. See its README before touching it; the short version is that `src/components/*.tsx` is vendored registry output (`shadcn add` overwrites it), hand-written compositions go in subdirectories, and `shadcn init`/`apply` refuse to run against the package because it has no framework.
 - `packages/typescript-config` — base tsconfigs exported as `@repo/typescript-config/{base,nextjs,react-library}.json`; app tsconfigs `extends` these.
 
-Workspace globs are `apps/*` and `packages/*` (pnpm workspaces, pnpm 9). Shared packages are consumed as `workspace:*` deps and are unbuilt — apps import their source directly, so a new shared package needs an `exports` map pointing at source files and `"type": "module"`.
+Workspace globs are `apps/*` and `packages/*` (pnpm workspaces, pnpm 9). Shared packages are consumed as `workspace:*` deps and are unbuilt — apps import their source directly, so a new shared package needs an `exports` map pointing at source files and `"type": "module"`. Next also needs the package in `transpilePackages`, and the app tsconfig needs a matching `paths` entry.
 
-Each of `README.md`, `apps/web/README.md`, and `packages/typescript-config/README.md` describes its own scope accurately; keep them in sync when the toolchain or task list changes.
+Tailwind lives in the design system: `apps/web/app/globals.css` only imports `@repo/design-system/globals.css` and declares an `@source` for the package's `src`. That `@source` is load-bearing — Tailwind v4 scans the importing project, so dropping it tree-shakes away every class used only inside the package.
+
+Each of `README.md`, `apps/web/README.md`, `packages/design-system/README.md`, and `packages/typescript-config/README.md` describes its own scope accurately; keep them in sync when the toolchain or task list changes.
 
 ## Linting and formatting
 
 The toolchain is entirely oxc — no ESLint, no Prettier.
 
-- **oxlint** — config at `apps/web/.oxlintrc.json` (JSONC; comments allowed), `correctness` at error and `suspicious`/`perf` at warn. No root-level oxlint config; each app carries its own.
+- **oxlint** — config at `apps/web/.oxlintrc.json` and `packages/design-system/.oxlintrc.json` (JSONC; comments allowed), `correctness` at error and `suspicious`/`perf` at warn. No root-level oxlint config; each package carries its own. The design system drops the `react-perf` plugin and disables three `jsx-a11y` rules for the vendored primitives — editing those files to satisfy the linter would be undone by the next `shadcn add`.
 - **oxfmt** — config at `.oxfmtrc.json` (repo root, defaults only plus an ignore for `.agents/**`). It runs repo-wide from the root rather than per-package, honours `.gitignore`, and formats JSON and Markdown alongside TS/TSX — a wider net than the Prettier glob it replaced, which covered only `**/*.{ts,tsx,md}`.
 
 oxfmt is pre-1.0 (`0.62.0`). Its output can shift between minor releases, so a version bump may reformat the repo; bump it on its own commit to keep that churn out of feature diffs.

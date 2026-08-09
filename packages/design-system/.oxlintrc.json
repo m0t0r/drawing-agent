@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // No `react-perf`: it flags every inline handler and JSX-valued prop, which is
+  // how both shadcn's registry output and idiomatic React are written. The app
+  // that consumes this package runs the React Compiler anyway.
+  "plugins": ["typescript", "react", "jsx-a11y", "import"],
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "rules": {
+    // Not needed with the automatic JSX runtime.
+    "react/react-in-jsx-scope": "off"
+  },
+  "overrides": [
+    {
+      // shadcn primitives are vendored source: `shadcn add` rewrites them
+      // wholesale, so local a11y edits would be lost on the next update. Our own
+      // compositions live in `chat/` and are linted normally.
+      "files": ["src/components/*.tsx"],
+      "rules": {
+        "jsx-a11y/prefer-tag-over-role": "off",
+        "jsx-a11y/click-events-have-key-events": "off",
+        "jsx-a11y/no-noninteractive-element-interactions": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist"]
+}
