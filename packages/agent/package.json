@@ -15,9 +15,13 @@
     "eval": "vitest run --config vitest.eval.config.ts"
   },
   "dependencies": {
-    "@excalidraw/excalidraw": "^0.18.1"
+    "@ai-sdk/openai": "^4.0.42",
+    "@excalidraw/excalidraw": "^0.18.1",
+    "ai": "7.0.66",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@ai-sdk/provider": "4.0.7",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.13.3",
     "oxlint": "^1.77.0",

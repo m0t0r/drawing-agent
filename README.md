@@ -1,6 +1,8 @@
 # drawing-agent
 
-Turborepo monorepo for the drawing-agent project. It holds a single Next.js app — an Excalidraw canvas with a chat panel beside it — plus the drawing agent's core, a shared design system and a shared TypeScript config package. There is no model behind the chat yet; sending a prompt draws a labelled box.
+Turborepo monorepo for the drawing-agent project. It holds a single Next.js app — an Excalidraw canvas with a chat panel beside it — plus the drawing agent's core, a shared design system and a shared TypeScript config package.
+
+The chat now streams replies from a real model. The agent cannot draw yet: it has no canvas tools, so a turn is text only and the canvas stays under your own hand.
 
 ## Requirements
 
@@ -47,7 +49,9 @@ pnpm exec turbo dev --filter=web
 
 Package-local scripts also work from inside `apps/web`.
 
-Tests and evals live in `packages/agent`; see [its README](packages/agent/README.md) for the split between the two. `pnpm eval` needs `OPENAI_API_KEY` in a `.env` at the repo root — copy `.env.example`.
+Tests and evals live in `packages/agent`; see [its README](packages/agent/README.md) for the split between the two.
+
+`OPENAI_API_KEY` goes in a `.env` at the repo root — copy `.env.example`. Both `pnpm dev` and `pnpm eval` need it; `pnpm test` does not, since it runs against a mock model. One file serves both, but they reach it by different routes: the eval config reads it with Vite's `loadEnv`, and `apps/web/next.config.ts` reads it with `process.loadEnvFile`, because Next only looks for a `.env` beside the app and Turbo filters out variables a task has not declared.
 
 ## Toolchain
 

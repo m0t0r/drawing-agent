@@ -10,12 +10,15 @@
     "check-types": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/react": "4.0.69",
     "@excalidraw/excalidraw": "^0.18.1",
     "@repo/agent": "workspace:*",
     "@repo/design-system": "workspace:*",
+    "ai": "7.0.66",
     "next": "16.3.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

@@ -18,6 +18,8 @@ pnpm dev
 
 Then open http://localhost:3000. Editing `app/page.tsx` hot-reloads.
 
+The chat calls a real model, so it needs `OPENAI_API_KEY` in the **repo root** `.env` — copy `.env.example`. There is deliberately no `.env` in this directory: `next.config.ts` reads the root one with `process.loadEnvFile`, so the app and the evals share a single file. Without a key the app still boots; the first message fails as a turn, with the cause on the server log and a short notice in the chat panel. The panel never shows the provider's own message — that can carry request details, and it is rendered in a browser.
+
 ## Scripts
 
 | Command            | What it does                                           |
