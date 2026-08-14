@@ -79,9 +79,6 @@ importers:
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
-      '@types/react':
-        specifier: ^19.2.18
-        version: 19.2.18
       oxlint:
         specifier: ^1.77.0
         version: 1.77.0

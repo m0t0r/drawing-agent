@@ -6,8 +6,9 @@
     // the `exports` map, so there is nothing to emit and the resolver has to
     // behave like the bundler that actually consumes it.
     "noEmit": true,
-    // The Vitest configs import `vitest.shared.ts` by its real filename: Vite
-    // 7 warns about extensionless specifiers under its native config loader.
+    // The Vitest configs import `vitest.shared.ts` by its real filename: Vite 8
+    // warns on an extensionless specifier under the native config loader that
+    // is slated to become its default.
     "allowImportingTsExtensions": true,
     "declaration": false,
     "declarationMap": false,

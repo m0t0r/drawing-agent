@@ -152,9 +152,9 @@ out entirely.
   First, `@excalidraw/excalidraw@0.18.1` publishes a bundler-only ESM bundle (extensionless
   specifiers, a JSON import with no import attribute, CJS named-export interop), so a bundler is
   mandatory; Vitest needs `server.deps.inline`. Second, it then reads browser globals at import
-  time. Six globals fix it — `window.location.origin`, `devicePixelRatio`, `Element`, `FontFace`,
-  `document.fonts` and a `document.createElement().getContext()` — about 25 lines, no jsdom and no
-  `node-canvas`. `FontFace` is read at call time rather than import time, so a shim built by
+  time. Five globals fix it — `window.location.origin`, `devicePixelRatio`, `Element`, `FontFace`,
+  and a `document` carrying `fonts` and a `createElement().getContext()` — about 25 lines, no jsdom
+  and no `node-canvas`. `FontFace` is read at call time rather than import time, so a shim built by
   "import it and see" misses it. That shim is `@repo/agent/canvas/headless-environment`, a
   `setupFiles` entry in both Vitest configs.
 - **Headless text measurement is deterministic but not real.** Width comes only from canvas
