@@ -1,73 +1,38 @@
 "use client";
 
+import { useChat } from "@ai-sdk/react";
 import { ChatPanel } from "@repo/design-system/components/chat/chat-panel";
-import type { ChatMessage } from "@repo/design-system/components/chat/types";
-import { useState } from "react";
-import { applyAddElements } from "../lib/canvas-adapter";
-import { useExcalidraw } from "./excalidraw-provider";
-
-const SEED_MESSAGES: ChatMessage[] = [
-  {
-    id: "seed-user",
-    role: "user",
-    parts: [{ type: "text", text: "Draw a box that says hello." }],
-  },
-  {
-    id: "seed-assistant",
-    role: "assistant",
-    parts: [
-      { type: "tool-addElements", state: "output-available" },
-      {
-        type: "text",
-        text: "Done — one **rectangle** on the canvas. Ask for another shape and it lands next to it.",
-      },
-    ],
-  },
-];
+import { toChatMessages } from "../lib/chat-messages";
 
 /**
- * Scaffolding, in the same spirit as the button it replaces: it proves the
- * imperative canvas API reaches a sibling of the canvas, now through the real
- * prompt UI. There is no model behind it — sending draws a labelled rectangle
- * and appends a canned turn. Swap this for `useChat`/`useAgentChat` and
- * `<ChatPanel>` stays untouched.
+ * The chat sidebar: `useChat` above, the presentational panel below, and the
+ * message adapter between them.
+ *
+ * Nothing survives a reload, deliberately — the conversation's lifetime matches
+ * the canvas's, and restoring a conversation about shapes that no longer exist
+ * would be worse than losing it.
+ *
+ * The canvas is not wired in yet. The agent has no tools, so this turn is text
+ * only; `useExcalidraw` comes back when `addElements` does, and `<ChatPanel>`
+ * will not need to change for it.
  */
 export function ChatSidebar() {
-  const { api } = useExcalidraw();
-  const [messages, setMessages] = useState<ChatMessage[]>(SEED_MESSAGES);
+  // The id is fixed rather than generated. `useChat` would otherwise mint one
+  // with `Math.random()` during render, and Cache Components refuses to prerender
+  // an unstable value in a Client Component. There is only ever one conversation
+  // on this page, and it does not survive a reload, so a constant is honest.
+  const { messages, sendMessage, status } = useChat({ id: "drawing-agent" });
 
-  async function handleSend(text: string) {
-    const id = crypto.randomUUID();
-
-    setMessages((current) => [
-      ...current,
-      { id: `${id}-user`, role: "user", parts: [{ type: "text", text }] },
-      {
-        id: `${id}-assistant`,
-        role: "assistant",
-        parts: [
-          { type: "tool-addElements", state: "output-available" },
-          { type: "text", text: `Drew a box labelled \`${text}\`.` },
-        ],
-      },
-    ]);
-
-    if (!api) return;
-
-    await applyAddElements(api, {
-      elements: [
-        {
-          type: "rectangle",
-          x: 100,
-          y: 100,
-          width: 240,
-          height: 120,
-          label: { text },
-        },
-      ],
-    });
-    api.scrollToContent(undefined, { fitToContent: true });
+  function handleSend(text: string) {
+    sendMessage({ text });
   }
 
-  return <ChatPanel messages={messages} status="ready" onSend={handleSend} title="Drawing agent" />;
+  return (
+    <ChatPanel
+      messages={toChatMessages(messages)}
+      status={status}
+      onSend={handleSend}
+      title="Drawing agent"
+    />
+  );
 }

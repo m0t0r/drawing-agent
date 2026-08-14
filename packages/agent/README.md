@@ -10,15 +10,21 @@ Read [`CONTEXT.md`](../../CONTEXT.md) at the repo root first — it defines _tur
 
 ```
 src/
+  loop.ts               `runTurn()` — the owned loop and the wire
+  prompt.ts             The system prompt, as one constant
+  model.ts              The model id, the provider factory, and `store: false`
   canvas/               Canvas ops: pure `(elements, input) => elements`
+  testing/              Scripted model responses for the loop's tests
   evals/                Golden cases and `*.eval.ts` suites
 ```
+
+`./loop` is the seam. `runTurn()` takes an injected **model** and an injected **executor** and returns the UI message stream — not a `Response`, so a test can read the chunks without a server. It owns stepping, termination, the step cap of 8, history shape and error policy; each individual step is one `streamText` call. Its history is grouped by **turn** rather than kept flat, which costs nothing now and makes later compaction safe by default: a whole turn can be dropped without orphaning a tool call from its result.
 
 `./canvas/ops` holds the ops themselves — `addElements` today, update and remove later. They are pure and synchronous, take **element skeletons** in and hand **runtime elements** back, and import neither React nor Excalidraw's imperative API, which is what lets the browser and the eval harness call the same function. Everything substantive lives here rather than in a caller: null stripping (strict-mode tool schemas send `null` for absent optional fields, and Excalidraw's defaults only fire on `undefined`), the skeleton conversion, and id preservation (`convertToExcalidrawElements` regenerates ids unless told not to, which would break the model's own references).
 
 `./canvas/headless-environment` is what makes those ops runnable off the browser — see below.
 
-The `exports` map also reserves `./scorers/*` (pure functions over the final element array). That directory does not exist yet; later tickets fill it along with `./loop`, `./prompt` and `./tools` under the top-level `./*` pattern.
+The `exports` map also reserves `./scorers/*` (pure functions over the final element array). That directory does not exist yet; a later ticket fills it, along with `./tools` under the top-level `./*` pattern. `src/testing/` is not exported at all — the `./*` pattern is one level deep, so scripted model responses stay internal.
 
 ## Running the canvas ops headlessly
 
