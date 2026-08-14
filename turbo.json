@@ -19,7 +19,8 @@
     },
     "eval": {
       // Never cached: a cached eval score is a replayed number presented as a
-      // fresh measurement. `env` declares the key so Turbo does not hash it out.
+      // fresh measurement. Turbo 2 runs tasks in strict env mode, so the key has
+      // to be declared here or it never reaches the process.
       "cache": false,
       "env": ["OPENAI_API_KEY"]
     },

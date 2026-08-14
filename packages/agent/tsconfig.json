@@ -10,6 +10,10 @@
     "declarationMap": false,
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    // `vitest/globals` matches `test.globals: true` in both Vitest configs.
+    // Naming `types` at all switches off automatic `@types/*` inclusion, so
+    // `node` has to be listed alongside it.
+    "types": ["vitest/globals", "node"],
     "paths": {
       "@repo/agent/*": ["./src/*"]
     }

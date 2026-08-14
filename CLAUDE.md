@@ -19,12 +19,12 @@ pnpm eval           # vitest run on *.eval.ts — real model calls, never cached
 
 Scope to one package with a filter: `pnpm exec turbo dev --filter=web`. Package-local scripts also work from inside `apps/web`.
 
-Tests live in `packages/agent` and nowhere else so far. Two globs, two configs: `*.test.ts` under `vitest.config.ts` (mock model, free, cached) and `*.eval.ts` under `vitest.eval.config.ts` (real model, `"cache": false` in `turbo.json`, needs `OPENAI_API_KEY` in a gitignored root `.env` — copy `.env.example`). Never widen the test glob to swallow evals; a cached eval score is a replayed number presented as a fresh measurement.
+Tests live in `packages/agent` and nowhere else so far. Two globs, two configs: `*.test.ts` under `vitest.config.ts` (mock model, free, cached) and `*.eval.ts` under `vitest.eval.config.ts` (real model, `"cache": false` in `turbo.json`, needs `OPENAI_API_KEY` in a gitignored root `.env` — copy `.env.example`). Never widen the test glob to swallow evals; a cached eval score is a replayed number presented as a fresh measurement. Test APIs are globals (`test.globals: true` plus `vitest/globals` in the package's tsconfig `types`) — write `describe`/`it`/`expect` without importing them.
 
 ## Structure
 
 - `apps/web` — Next.js 16 App Router, React 19, Tailwind CSS 4, React Compiler. The only app.
-- `packages/agent` — the drawing agent's loop, prompt, tools, canvas ops, scorers and evals, as `@repo/agent`. Same conventions as the design system: private, ESM, no build step, `exports` pointing at source. Nothing here imports React or Excalidraw's imperative API — the route handler and the React provider stay in `apps/web`. The root export is empty on purpose; import a subpath. Read `CONTEXT.md` before working in it.
+- `packages/agent` — the drawing agent's loop, prompt, tools, canvas ops, scorers and evals, as `@repo/agent`. Same conventions as the design system: private, ESM, no build step, `exports` pointing at source. Nothing here imports React or Excalidraw's imperative API — the route handler and the React provider stay in `apps/web`. There is no root export — import a subpath. Read `CONTEXT.md` before working in it.
 - `packages/design-system` — shadcn/ui components and the Tailwind theme, as `@repo/design-system`. See its README before touching it; the short version is that `src/components/*.tsx` is vendored registry output (`shadcn add` overwrites it) and hand-written compositions go in subdirectories. `shadcn add -c packages/design-system` works, but `init`/`apply` refuse to run there — they glob the cwd for a framework config file and the package has none — so run those with `-c apps/web`, whose `components.json` resolves `ui`/`utils`/css back into the package.
 - `packages/typescript-config` — base tsconfigs exported as `@repo/typescript-config/{base,nextjs,react-library}.json`; app tsconfigs `extends` these.
 
@@ -32,7 +32,7 @@ Workspace globs are `apps/*` and `packages/*` (pnpm workspaces, pnpm 9). Shared 
 
 Tailwind lives in the design system: `apps/web/app/globals.css` only imports `@repo/design-system/globals.css` and declares an `@source` for the package's `src`. That `@source` is load-bearing — Tailwind v4 scans the importing project, so dropping it tree-shakes away every class used only inside the package.
 
-Each of `README.md`, `apps/web/README.md`, `packages/design-system/README.md`, and `packages/typescript-config/README.md` describes its own scope accurately; keep them in sync when the toolchain or task list changes.
+Each of `README.md`, `apps/web/README.md`, `packages/agent/README.md`, `packages/design-system/README.md`, and `packages/typescript-config/README.md` describes its own scope accurately; keep them in sync when the toolchain or task list changes.
 
 ## Linting and formatting
 
