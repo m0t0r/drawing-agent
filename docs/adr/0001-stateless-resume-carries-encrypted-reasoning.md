@@ -14,8 +14,10 @@ request. This is now observed, not inferred.
 
 ## What was observed
 
-Five real `gpt-5.4-mini` calls through `ai@7` / `@ai-sdk/openai@4`, each one a fresh request
-replaying the full history, with a tool that has no `execute`.
+Four real `gpt-5.4-mini` requests through `ai@7` / `@ai-sdk/openai@4`, against a tool with no
+`execute`. Three of them were a chain of stateless resumes — one step each, every one a fresh
+request replaying the whole history. The fourth replayed that same history after rebuilding it
+through `convertToModelMessages`, which is the production path.
 
 - Setting `providerOptions.openai.store = false` makes the provider add
   `include: ["reasoning.encrypted_content"]` to the request body by itself. Nothing else has to
@@ -28,7 +30,7 @@ replaying the full history, with a tool that has no `execute`.
   only on data we hold.
 - A reasoning item sitting **between a tool call and its tool result** is accepted and correctly
   positioned: the replayed input reads `reasoning` → `function_call` → `function_call_output`,
-  repeated once per step. No error, no warning, no degradation across three chained steps.
+  repeated once per step. No error, no warning, no degradation across the whole chain.
 - Several reasoning parts may share one `itemId` (one response item, several summary
   paragraphs). The provider's converter merges them back into a single `reasoning` item with a
   multi-entry `summary`, so parts must never be reordered or split across messages.
