@@ -413,9 +413,10 @@ and is worth trying if turn latency becomes a problem. **Unmeasured.**
 
 ## 6. What this means for this repo
 
-`CONTEXT.md` records the decision as _"Reasoning survives via `store: false`. The provider then
+`CONTEXT.md` recorded the decision as _"Reasoning survives via `store: false`. The provider then
 automatically requests encrypted reasoning content and replays it verbatim through the browser."_ That
-holds, with three refinements worth writing down:
+holds, with three refinements worth writing down — all three are now folded into `CONTEXT.md` and
+[ADR-0001](../adr/0001-stateless-resume-carries-encrypted-reasoning.md):
 
 1. **`store: false` must be explicit**, and the model must be one the provider classifies as a reasoning
    model. `gpt-5.4-mini` is (`:5386`), so no `forceReasoning` is needed today; a model-id change is the
@@ -435,23 +436,23 @@ that it precedes the `tool-call` in the same assistant message. That is checkabl
 
 ## Settled by the live spike
 
-The throwaway spike for [#5](https://github.com/m0t0r/drawing-agent/issues/5) ran five real
-`gpt-5.4-mini` turns and closed the first three of these. See
-[ADR-0001](../adr/0001-stateless-resume-carries-encrypted-reasoning.md) for the observations.
+The throwaway spike for [#5](https://github.com/m0t0r/drawing-agent/issues/5) made four real
+`gpt-5.4-mini` requests and closed four of the questions this document opened. See
+[ADR-0001](../adr/0001-stateless-resume-carries-encrypted-reasoning.md) for the decision it settled.
 
-1. **The end-to-end claim holds.** Three chained stateless resumes, a client-side tool with no
-   `execute`, `store: false`. Reasoning came back with `itemId` and `reasoningEncryptedContent` on every
-   step, was replayed verbatim as a `reasoning` input item, and the provider neither errored nor warned
-   — `result.warnings` was empty throughout.
-2. **The auto-`include` is on the wire.** The captured request body carried
-   `include: ["reasoning.encrypted_content"]` on every request, so the provider does classify
-   `gpt-5.4-mini` as a reasoning model. Whether the API would have returned encrypted content without it
-   was not tested — the provider always sends it, so the question is moot in practice.
-3. **Replayed `rs_…` ids are accepted** under `store: false`. Every replayed reasoning item carried its
-   original `id` and none was rejected.
-4. **Multi-summary reasoning items behave as read.** One step returned two reasoning parts sharing one
-   `itemId`; the converter merged them back into a single item with a two-entry `summary`, and the API
-   accepted it.
+- **The end-to-end claim holds.** Three chained stateless resumes, a client-side tool with no
+  `execute`, `store: false`. Reasoning came back with `itemId` and `reasoningEncryptedContent` on every
+  step, was replayed verbatim as a `reasoning` input item, and the provider neither errored nor warned
+  — `result.warnings` was empty throughout.
+- **The auto-`include` is on the wire.** The captured request body carried
+  `include: ["reasoning.encrypted_content"]` on every request, so the provider does classify
+  `gpt-5.4-mini` as a reasoning model. Whether the API would have returned encrypted content without it
+  was not tested — the provider always sends it, so the question is moot in practice.
+- **Replayed `rs_…` ids are accepted** under `store: false`. Every replayed reasoning item carried its
+  original `id` and none was rejected.
+- **Multi-summary reasoning items behave as read.** One step returned two reasoning parts sharing one
+  `itemId`; the converter merged them back into a single item with a two-entry `summary`, and the API
+  accepted it.
 
 Also observed, and not something source reading predicted: `convertToModelMessages` only interleaves
 tool results with their calls if the assistant UI message carries `step-start` parts. Without them it
@@ -460,10 +461,10 @@ without error or warning** — which makes it exactly the kind of silent degrada
 
 ## Open questions — still not verified
 
-4. **The exact API-side rule for "required following item."** Reconstructed from forum reports, not from
-   the API reference, which does not document it.
-5. **Prompt-cache impact of `store: false`** and whether `promptCacheKey` recovers it. Unmeasured (§5.5).
-6. **Reasoning under abort.** If the request is aborted mid-stream, the reasoning part's metadata is
-   whatever the last `reasoning-delta` set — i.e. `{ itemId }` with no encrypted content. The
-   `:5330-5340` sweep would then strip it on the next request. Whether that produces a degraded-but-
-   working turn or an API error is untested.
+- **The exact API-side rule for "required following item."** Reconstructed from forum reports, not from
+  the API reference, which does not document it.
+- **Prompt-cache impact of `store: false`** and whether `promptCacheKey` recovers it. Unmeasured (§5.5).
+- **Reasoning under abort.** If the request is aborted mid-stream, the reasoning part's metadata is
+  whatever the last `reasoning-delta` set — i.e. `{ itemId }` with no encrypted content. The
+  `:5330-5340` sweep would then strip it on the next request. Whether that produces a degraded-but-
+  working turn or an API error is untested.

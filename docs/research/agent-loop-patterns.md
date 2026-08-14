@@ -2120,3 +2120,24 @@ assert on merged step boundaries without a browser — that is what `ui.mjs` did
 - Abort/error semantics of `writer.merge` when one merged result throws mid-stream were not
   exercised; the typings note `UIMessageStreamWriter.onError` exists "for forwarding when merging
   streams to prevent duplicated error masking", which implies care is needed there.
+
+---
+
+## Addendum 2026-08-14a — the reasoning question is now answered
+
+This document twice concludes that the reasoning question could not be settled by reading:
+"whether reasoning survives that round-trip is a property of `@ai-sdk/openai`'s
+`ModelMessage`↔provider mapping, which this repo neither configures nor tests… the `store: false` +
+stateless-resume + dropped-reasoning question remains unverified and still needs the
+smallest-possible script," and open question 7, "Reasoning-item replay requirements… **verify before
+building**."
+
+**Both are now closed.** The smallest-possible script was written and run for
+[#5](https://github.com/m0t0r/drawing-agent/issues/5). Reasoning does survive: with `store: false`
+the provider requests encrypted reasoning content unprompted and replays it verbatim on every fresh
+request, including where a reasoning item sits between a tool call and its tool result. The decision
+is [ADR-0001](../adr/0001-stateless-resume-carries-encrypted-reasoning.md); the provider-source
+reading behind it is [`reasoning-across-stateless-resume.md`](reasoning-across-stateless-resume.md).
+
+Manual replay, not `previous_response_id`, is therefore the right choice — which is what open
+question 7 said this would decide.
