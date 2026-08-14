@@ -4,7 +4,7 @@ The vocabulary and settled decisions for the drawing agent. Read this before exp
 codebase; use these terms in issues, tests, and code rather than synonyms.
 
 Established 2026-08-09 in a grilling session. Supporting research, with sources, is in
-[`docs/research/agent-loop-patterns.md`](docs/research/agent-loop-patterns.md).
+[`docs/research/`](docs/research/); architecture decisions are in [`docs/adr/`](docs/adr/).
 
 ## Glossary
 
@@ -87,9 +87,14 @@ Cloudflare-shaped) and `Hendrixer/harness-engineering@complete` (an owned loop a
 - **Resume is stateless.** A client tool result arrives as a fresh request with the full
   message history; the loop rebuilds model messages with `convertToModelMessages` — which is
   async, takes `tools`, and must not be given `ignoreIncompleteToolCalls` on this path.
-- **Reasoning survives via `store: false`.** The provider then automatically requests encrypted
-  reasoning content and replays it verbatim through the browser. Storing provider-side instead
-  would make correctness depend on OpenAI retention.
+- **Reasoning survives via `store: false`** — verified 2026-08-14 against real `gpt-5.4-mini`
+  calls, see [ADR-0001](docs/adr/0001-stateless-resume-carries-encrypted-reasoning.md). Setting
+  it makes the provider add `include: ["reasoning.encrypted_content"]` unprompted; each
+  reasoning part comes back with `providerMetadata.openai.itemId` and
+  `.reasoningEncryptedContent`, and is replayed verbatim as a Responses `reasoning` input item
+  on the next request. `previous_response_id` is never sent. A reasoning item **between a tool
+  call and its tool result** is accepted and correctly positioned — no error, no degradation.
+  Storing provider-side instead would make correctness depend on OpenAI retention.
 - **Tools** are declared with `tool()`, `inputSchema`, and `strict: true`. Under strict mode
   every property must be required, so optional fields are `.nullable()` and nulls are stripped
   before the **element skeleton** reaches Excalidraw. Use `z.union`, never
@@ -123,6 +128,20 @@ out entirely.
   step budget ever moves.
 - `MockLanguageModelV4`'s finish part takes `finishReason` as an object (`{ unified: 'stop' }`).
   A bare string silently becomes `'other'`.
+- `convertToModelMessages` splits an assistant message into steps at its `step-start` parts.
+  Since the wire merges a whole turn into **one** assistant message, dropping `step-start` makes
+  it emit every assistant part first and every tool result after — tool calls detached from
+  their outputs. The provider accepts it silently. `sendStart` per step is history fidelity, not
+  cosmetics.
+- Several `reasoning` parts can share one `providerMetadata.openai.itemId` — one response item,
+  several summary paragraphs. The provider's converter merges them back into one `reasoning`
+  item, so never reorder them or split them across messages.
+- Every way reasoning replay can fail degrades to a **warning, not an error** — the provider
+  strips a reasoning item lacking encrypted content rather than rejecting it, and the API
+  accepted a mis-ordered history without complaint. Surface `result.warnings`; a loop that
+  discards them will never learn that reasoning stopped surviving.
+- The auto-`include` is gated on the provider classifying the model as a reasoning model.
+  `gpt-5.4-mini` qualifies; a model-id change is what would silently switch it off.
 - Unverified: whether `convertToExcalidrawElements` runs in bare Node (decides how far the pure
   core extends).
 - Settled 2026-08-14: `vitest --typecheck` **does** parse TypeScript 7's output. Vitest 4.1.10
