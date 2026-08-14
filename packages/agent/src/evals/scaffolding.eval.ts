@@ -1,5 +1,4 @@
 import process from "node:process";
-import { describe, expect, it } from "vitest";
 
 // Scaffolding, and the one thing worth checking before any golden case exists:
 // that `pnpm eval` reaches the API key in the gitignored root `.env`. If this

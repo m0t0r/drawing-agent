@@ -10,11 +10,10 @@ Read [`CONTEXT.md`](../../CONTEXT.md) at the repo root first — it defines _tur
 
 ```
 src/
-  index.ts              Deliberately bare — import a subpath, not the root
   evals/                Golden cases and `*.eval.ts` suites
 ```
 
-The `exports` map also reserves `./canvas/*` (canvas ops: pure `(elements, input) => elements`) and `./scorers/*` (pure functions over the final element array). Those directories do not exist yet — the package currently ships scaffolding only, and later tickets fill them along with `./loop`, `./prompt` and `./tools` under the top-level `./*` pattern.
+The `exports` map reserves `./canvas/*` (canvas ops: pure `(elements, input) => elements`) and `./scorers/*` (pure functions over the final element array). Those directories do not exist yet — the package currently ships scaffolding only, and later tickets fill them along with `./loop`, `./prompt` and `./tools` under the top-level `./*` pattern.
 
 ## Consuming it
 
@@ -23,7 +22,7 @@ import { runTurn } from "@repo/agent/loop";
 import { addElements } from "@repo/agent/canvas/ops";
 ```
 
-The root export is empty on purpose: subpaths keep the eval-only half of the package out of the browser bundle. `apps/web` needs three things, exactly as it does for `@repo/design-system` — `"@repo/agent": "workspace:*"`, an entry in `transpilePackages`, and `paths` mappings for both `@repo/agent` and `@repo/agent/*`.
+There is no root export, by the same reasoning as `@repo/design-system`: a barrel would let a browser bundle pull in the eval-only half of the package by accident, and the cleanest way to say "import a subpath" is to offer no root. `apps/web` needs three things, exactly as it does for the design system — `"@repo/agent": "workspace:*"`, an entry in `transpilePackages`, and a `paths` mapping for `@repo/agent/*`.
 
 ## Tests and evals
 
@@ -34,7 +33,12 @@ The root export is empty on purpose: subpaths keep the eval-only half of the pac
 
 Two configs, two globs. `vitest.config.ts` includes only `*.test.ts`, so an eval can never be dragged into the fast suite; `vitest.eval.config.ts` includes only `*.eval.ts`. The Turbo `eval` task sets `"cache": false` — a cached eval score is a replayed number presented as a fresh measurement.
 
-Evals need `OPENAI_API_KEY` in the gitignored `.env` at the repo root (see `.env.example`). Turbo 2 dropped its dotenv support, so `vitest.eval.config.ts` loads that file itself with Vite's `loadEnv` and declares the variable on the task so Turbo does not hash it out.
+`describe`, `it` and `expect` are **globals** — don't import them. Both configs set `test.globals: true` and `tsconfig.json` lists `vitest/globals` in `types`; the two have to move together, and naming `types` at all switches off automatic `@types/*` inclusion, which is why `node` is listed beside it.
+
+Evals need `OPENAI_API_KEY` in the gitignored `.env` at the repo root (see `.env.example`). Two separate things have to be true for it to arrive:
+
+- Turbo 2 dropped its dotenv support, so nothing loads that file for us — `vitest.eval.config.ts` reads it with Vite's `loadEnv` and hands it to the tests as `test.env`.
+- Turbo 2 also runs tasks in **strict env mode**, filtering out any variable a task hasn't declared. That is why the `eval` task lists `"env": ["OPENAI_API_KEY"]`: without it, a key exported in your shell never reaches the process (verified by removing the declaration and watching the eval fail). It is not about the cache — the task is uncached.
 
 `loadEnv` is imported from `vite` rather than `vitest/config`: Vitest 4 re-exports only the config helpers.
 

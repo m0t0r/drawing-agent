@@ -9,6 +9,7 @@ const repoRoot = resolve(import.meta.dirname, "../..");
 export default defineConfig(({ mode }) => ({
   test: {
     include: ["src/**/*.eval.ts"],
+    globals: true,
     // Turbo 2 dropped its dotenv support, so nothing loads the gitignored root
     // `.env` for us. The empty prefix means "every variable", not just Vite's.
     env: loadEnv(mode, repoRoot, ""),
