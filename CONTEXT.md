@@ -124,4 +124,8 @@ out entirely.
 - `MockLanguageModelV4`'s finish part takes `finishReason` as an object (`{ unified: 'stop' }`).
   A bare string silently becomes `'other'`.
 - Unverified: whether `convertToExcalidrawElements` runs in bare Node (decides how far the pure
-  core extends), and whether `vitest --typecheck` parses TypeScript 7's Go compiler output.
+  core extends).
+- Settled 2026-08-14: `vitest --typecheck` **does** parse TypeScript 7's output. Vitest 4.1.10
+  shelling out to `tsgo` 7.0.2 reports a deliberate type error against the right file, line and
+  column, and reports `no errors` once it is removed. The mode is still labelled experimental by
+  Vitest, so pin the version if `*.test-d.ts` files are ever added; nothing uses it today.

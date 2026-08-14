@@ -1,0 +1,19 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    // Like @repo/design-system, this package ships source rather than build
+    // output: the app and the eval harness both import the `.ts` files through
+    // the `exports` map, so there is nothing to emit and the resolver has to
+    // behave like the bundler that actually consumes it.
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@repo/agent/*": ["./src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules"]
+}
