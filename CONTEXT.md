@@ -146,8 +146,33 @@ out entirely.
 - `reasoningEncryptedContent` only lands on a reasoning part once `reasoning-end` has. Read a step's
   messages mid-stream and the encrypted content is silently absent — the loop must take them after
   the step's stream has finished, never from a snapshot taken during it.
-- Unverified: whether `convertToExcalidrawElements` runs in bare Node (decides how far the pure
-  core extends).
+- Settled 2026-08-14: `convertToExcalidrawElements` **does not** run in bare Node, and the pure
+  core extends through it anyway. Two obstacles, both measured — see
+  [`docs/research/excalidraw-skeleton-conversion.md`](docs/research/excalidraw-skeleton-conversion.md).
+  First, `@excalidraw/excalidraw@0.18.1` publishes a bundler-only ESM bundle (extensionless
+  specifiers, a JSON import with no import attribute, CJS named-export interop), so a bundler is
+  mandatory; Vitest needs `server.deps.inline`. Second, it then reads browser globals at import
+  time. Six globals fix it — `window.location.origin`, `devicePixelRatio`, `Element`, `FontFace`,
+  `document.fonts` and a `document.createElement().getContext()` — about 25 lines, no jsdom and no
+  `node-canvas`. `FontFace` is read at call time rather than import time, so a shim built by
+  "import it and see" misses it. That shim is `@repo/agent/canvas/headless-environment`, a
+  `setupFiles` entry in both Vitest configs.
+- **Headless text measurement is deterministic but not real.** Width comes only from canvas
+  `measureText`; height is arithmetic. Headless there is no font, so the shim installs
+  `setCustomTextMetricsProvider` with a fixed per-character ratio — otherwise the numbers would be
+  whatever a stub happened to return. The measurement is not cosmetic: it decides where `wrapText`
+  breaks lines and how tall a labelled container grows, so it feeds the scene graph's structure.
+  **Scorers must not grade** text `width`/`height`, a wrapped `text` string's line breaks, a
+  container sized by its label, or any overlap involving one. Element counts and types, the
+  `containerId`/`boundElements`/`startBinding`/`endBinding` graph, `originalText`, and explicitly
+  sized geometry are all safe.
+- In the browser the font must be loaded _before_ conversion, permanently: `Fonts.onLoaded`
+  invalidates only the shape cache and never re-measures, so a fallback-font width is baked into
+  the element for good. `apps/web/lib/canvas-adapter.ts` awaits `ensureCanvasFontLoaded()` in front
+  of every op for that reason — it is load-bearing, not belt-and-braces.
+- `convertToExcalidrawElements` regenerates ids unless given `{ regenerateIds: false }`, and an
+  arrow `start`/`end` id that names nothing in the same batch **silently fabricates** a default
+  100×100 element instead of erroring. Validate binding ids ourselves.
 - Settled 2026-08-14: `vitest --typecheck` **does** parse TypeScript 7's output. Vitest 4.1.10
   shelling out to `tsgo` 7.0.2 reports a deliberate type error against the right file, line and
   column, and reports `no errors` once it is removed. The mode is still labelled experimental by

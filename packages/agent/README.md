@@ -10,10 +10,26 @@ Read [`CONTEXT.md`](../../CONTEXT.md) at the repo root first — it defines _tur
 
 ```
 src/
+  canvas/               Canvas ops: pure `(elements, input) => elements`
   evals/                Golden cases and `*.eval.ts` suites
 ```
 
-The `exports` map reserves `./canvas/*` (canvas ops: pure `(elements, input) => elements`) and `./scorers/*` (pure functions over the final element array). Those directories do not exist yet — the package currently ships scaffolding only, and later tickets fill them along with `./loop`, `./prompt` and `./tools` under the top-level `./*` pattern.
+`./canvas/ops` holds the ops themselves — `addElements` today, update and remove later. They are pure and synchronous, take **element skeletons** in and hand **runtime elements** back, and import neither React nor Excalidraw's imperative API, which is what lets the browser and the eval harness call the same function. Everything substantive lives here rather than in a caller: null stripping (strict-mode tool schemas send `null` for absent optional fields, and Excalidraw's defaults only fire on `undefined`), the skeleton conversion, and id preservation (`convertToExcalidrawElements` regenerates ids unless told not to, which would break the model's own references).
+
+`./canvas/headless-environment` is what makes those ops runnable off the browser — see below.
+
+The `exports` map also reserves `./scorers/*` (pure functions over the final element array). That directory does not exist yet; later tickets fill it along with `./loop`, `./prompt` and `./tools` under the top-level `./*` pattern.
+
+## Running the canvas ops headlessly
+
+`convertToExcalidrawElements` does **not** run in a bare Node process, and the reasons are worth knowing before you touch a Vitest config. Both were measured; the workings are in [`docs/research/excalidraw-skeleton-conversion.md`](../../docs/research/excalidraw-skeleton-conversion.md).
+
+- `@excalidraw/excalidraw@0.18.1` publishes a bundle only a bundler can load. Node's resolver rejects it three times over before any Excalidraw code runs. Hence `server.deps.inline` in both configs — without it Vitest externalises the package and hands it to Node.
+- It then reads browser globals at import time. `src/canvas/headless-environment.ts` supplies the six it needs, in about 25 lines. No jsdom, no `node-canvas`. It is a `setupFiles` entry so it lands before the import; `FontFace` in particular is read at _call_ time, from inside conversion, so a shim built by "import it and see what breaks" misses it.
+
+Both settings live in `vitest.shared.ts` so the test and eval configs cannot drift on them.
+
+The shim also installs Excalidraw's `setCustomTextMetricsProvider`. Text width comes only from canvas `measureText`, and headless there is no font — left to a stub the numbers would be whatever the stub returned. Pinning a per-character ratio makes headless conversion deterministic, but **not** real: the measurement decides where `wrapText` breaks lines and how tall a labelled container grows, so scorers must not grade text `width`/`height`, wrapped line breaks, a label-sized container, or any overlap involving one.
 
 ## Consuming it
 
@@ -21,6 +37,8 @@ The `exports` map reserves `./canvas/*` (canvas ops: pure `(elements, input) => 
 import { runTurn } from "@repo/agent/loop";
 import { addElements } from "@repo/agent/canvas/ops";
 ```
+
+`@excalidraw/excalidraw` is a dependency here, for `convertToExcalidrawElements` alone. That is the data layer, not the editor — the imperative API and the React binding stay in `apps/web`. It is a heavy import all the same, so `apps/web` reaches the ops through a dynamic `import()` in `lib/canvas-adapter.ts` and they stay in the canvas chunk.
 
 There is no root export, by the same reasoning as `@repo/design-system`: a barrel would let a browser bundle pull in the eval-only half of the package by accident, and the cleanest way to say "import a subpath" is to offer no root. `apps/web` needs three things, exactly as it does for the design system — `"@repo/agent": "workspace:*"`, an entry in `transpilePackages`, and a `paths` mapping for `@repo/agent/*`.
 

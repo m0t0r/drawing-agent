@@ -14,9 +14,13 @@
     "test": "vitest run",
     "eval": "vitest run --config vitest.eval.config.ts"
   },
+  "dependencies": {
+    "@excalidraw/excalidraw": "^0.18.1"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
     "oxlint": "^1.77.0",
     "typescript": "^7.0.2",
     "vite": "^8.2.1",

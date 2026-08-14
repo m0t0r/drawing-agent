@@ -68,6 +68,10 @@ importers:
         version: 7.0.2
 
   packages/agent:
+    dependencies:
+      '@excalidraw/excalidraw':
+        specifier: ^0.18.1
+        version: 0.18.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -75,6 +79,9 @@ importers:
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
+      '@types/react':
+        specifier: ^19.2.18
+        version: 19.2.18
       oxlint:
         specifier: ^1.77.0
         version: 1.77.0

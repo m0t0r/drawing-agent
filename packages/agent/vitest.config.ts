@@ -1,7 +1,9 @@
 import { defineConfig } from "vitest/config";
+import { headlessExcalidraw } from "./vitest.shared.ts";
 
 export default defineConfig({
   test: {
+    ...headlessExcalidraw,
     // Evals are `*.eval.ts` and run from `vitest.eval.config.ts`. The default
     // glob deliberately misses them: `pnpm test` must stay free, fast and
     // deterministic, and an eval is none of those.

@@ -3,11 +3,13 @@ import { resolve } from "node:path";
 // the config helpers, not the whole of Vite's config surface.
 import { loadEnv } from "vite";
 import { defineConfig } from "vitest/config";
+import { headlessExcalidraw } from "./vitest.shared.ts";
 
 const repoRoot = resolve(import.meta.dirname, "../..");
 
 export default defineConfig(({ mode }) => ({
   test: {
+    ...headlessExcalidraw,
     include: ["src/**/*.eval.ts"],
     globals: true,
     // Turbo 2 dropped its dotenv support, so nothing loads the gitignored root
