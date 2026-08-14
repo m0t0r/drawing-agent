@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  // No `react`/`jsx-a11y`: nothing here renders. The loop, the tools, the canvas
+  // ops and the scorers are plain TypeScript so the eval harness can run them in
+  // a bare Node process.
+  "plugins": ["typescript", "import", "vitest"],
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  }
+}

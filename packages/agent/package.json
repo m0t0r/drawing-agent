@@ -1,0 +1,26 @@
+{
+  "name": "@repo/agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./canvas/*": "./src/canvas/*.ts",
+    "./scorers/*": "./src/scorers/*.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "lint": "oxlint",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "eval": "vitest run --config vitest.eval.config.ts"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.13.3",
+    "oxlint": "^1.77.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1",
+    "vitest": "^4.0.7"
+  }
+}

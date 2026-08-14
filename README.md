@@ -1,6 +1,6 @@
 # drawing-agent
 
-Turborepo monorepo for the drawing-agent project. It holds a single Next.js app — an Excalidraw canvas with a chat panel beside it — plus a shared design system and a shared TypeScript config package. There is no model behind the chat yet; sending a prompt draws a labelled box.
+Turborepo monorepo for the drawing-agent project. It holds a single Next.js app — an Excalidraw canvas with a chat panel beside it — plus the drawing agent's core, a shared design system and a shared TypeScript config package. There is no model behind the chat yet; sending a prompt draws a labelled box.
 
 ## Requirements
 
@@ -17,6 +17,7 @@ pnpm install
 apps/
   web/                  Next.js 16 App Router app — React 19, Tailwind CSS 4, React Compiler
 packages/
+  agent/                The agent's loop, tools, canvas ops, scorers and evals (@repo/agent)
   design-system/        shadcn/ui components + the Tailwind theme (@repo/design-system)
   typescript-config/    Shared tsconfig bases (@repo/typescript-config)
 ```
@@ -32,6 +33,8 @@ Run from the repo root — Turborepo fans each task out across the workspace.
 | `pnpm dev`          | Start all apps in watch mode (web on http://localhost:3000) |
 | `pnpm build`        | Production build                                            |
 | `pnpm lint`         | oxlint                                                      |
+| `pnpm test`         | Vitest, on `*.test.ts` — free, fast, no network             |
+| `pnpm eval`         | Vitest, on `*.eval.ts` — real model calls, never cached     |
 | `pnpm check-types`  | `next typegen` + `tsc --noEmit`                             |
 | `pnpm format`       | oxfmt, rewriting files in place                             |
 | `pnpm format:check` | oxfmt in check mode, for CI                                 |
@@ -44,7 +47,7 @@ pnpm exec turbo dev --filter=web
 
 Package-local scripts also work from inside `apps/web`.
 
-No test runner is set up yet.
+Tests and evals live in `packages/agent`; see [its README](packages/agent/README.md) for the split between the two. `pnpm eval` needs `OPENAI_API_KEY` in a `.env` at the repo root — copy `.env.example`.
 
 ## Toolchain
 
@@ -54,9 +57,10 @@ No test runner is set up yet.
 | Language            | TypeScript 7 (the native Go compiler)        |
 | Linting             | oxlint                                       |
 | Formatting          | oxfmt                                        |
+| Tests and evals     | Vitest 4                                     |
 | UI components       | shadcn/ui (Base UI primitives, `vega` style) |
 
-Linting and formatting are entirely [oxc](https://oxc.rs) — ESLint and Prettier were both removed. oxlint is configured per package (`apps/web/.oxlintrc.json`, `packages/design-system/.oxlintrc.json`); oxfmt is configured once at the root (`.oxfmtrc.json`) and runs repo-wide, honouring `.gitignore`.
+Linting and formatting are entirely [oxc](https://oxc.rs) — ESLint and Prettier were both removed. oxlint is configured per package (`apps/web/.oxlintrc.json`, `packages/design-system/.oxlintrc.json`, `packages/agent/.oxlintrc.json`); oxfmt is configured once at the root (`.oxfmtrc.json`) and runs repo-wide, honouring `.gitignore`.
 
 Two constraints worth knowing before changing versions:
 

@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
   cacheComponents: true,
-  // @repo/design-system ships TypeScript source rather than build output.
-  transpilePackages: ["@repo/design-system"],
+  // Both shared packages ship TypeScript source rather than build output.
+  transpilePackages: ["@repo/agent", "@repo/design-system"],
 };
 
 export default nextConfig;

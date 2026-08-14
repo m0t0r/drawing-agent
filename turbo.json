@@ -13,6 +13,16 @@
     "check-types": {
       "dependsOn": ["^check-types"]
     },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": []
+    },
+    "eval": {
+      // Never cached: a cached eval score is a replayed number presented as a
+      // fresh measurement. `env` declares the key so Turbo does not hash it out.
+      "cache": false,
+      "env": ["OPENAI_API_KEY"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

@@ -13,15 +13,18 @@ pnpm lint           # oxlint per package
 pnpm check-types    # tsc --noEmit per package
 pnpm format         # oxfmt, writes in place
 pnpm format:check   # oxfmt --check, for CI
+pnpm test           # vitest run, per package — mock models only, cached
+pnpm eval           # vitest run on *.eval.ts — real model calls, never cached
 ```
 
 Scope to one package with a filter: `pnpm exec turbo dev --filter=web`. Package-local scripts also work from inside `apps/web`.
 
-No test runner is configured yet.
+Tests live in `packages/agent` and nowhere else so far. Two globs, two configs: `*.test.ts` under `vitest.config.ts` (mock model, free, cached) and `*.eval.ts` under `vitest.eval.config.ts` (real model, `"cache": false` in `turbo.json`, needs `OPENAI_API_KEY` in a gitignored root `.env` — copy `.env.example`). Never widen the test glob to swallow evals; a cached eval score is a replayed number presented as a fresh measurement.
 
 ## Structure
 
 - `apps/web` — Next.js 16 App Router, React 19, Tailwind CSS 4, React Compiler. The only app.
+- `packages/agent` — the drawing agent's loop, prompt, tools, canvas ops, scorers and evals, as `@repo/agent`. Same conventions as the design system: private, ESM, no build step, `exports` pointing at source. Nothing here imports React or Excalidraw's imperative API — the route handler and the React provider stay in `apps/web`. The root export is empty on purpose; import a subpath. Read `CONTEXT.md` before working in it.
 - `packages/design-system` — shadcn/ui components and the Tailwind theme, as `@repo/design-system`. See its README before touching it; the short version is that `src/components/*.tsx` is vendored registry output (`shadcn add` overwrites it) and hand-written compositions go in subdirectories. `shadcn add -c packages/design-system` works, but `init`/`apply` refuse to run there — they glob the cwd for a framework config file and the package has none — so run those with `-c apps/web`, whose `components.json` resolves `ui`/`utils`/css back into the package.
 - `packages/typescript-config` — base tsconfigs exported as `@repo/typescript-config/{base,nextjs,react-library}.json`; app tsconfigs `extends` these.
 
@@ -35,7 +38,7 @@ Each of `README.md`, `apps/web/README.md`, `packages/design-system/README.md`, a
 
 The toolchain is entirely oxc — no ESLint, no Prettier.
 
-- **oxlint** — config at `apps/web/.oxlintrc.json` and `packages/design-system/.oxlintrc.json` (JSONC; comments allowed), `correctness` at error and `suspicious`/`perf` at warn. No root-level oxlint config; each package carries its own. The design system drops the `react-perf` plugin and disables three `jsx-a11y` rules for the vendored primitives — editing those files to satisfy the linter would be undone by the next `shadcn add`.
+- **oxlint** — config at `apps/web/.oxlintrc.json`, `packages/design-system/.oxlintrc.json` and `packages/agent/.oxlintrc.json` (JSONC; comments allowed), `correctness` at error and `suspicious`/`perf` at warn. No root-level oxlint config; each package carries its own. The design system drops the `react-perf` plugin and disables three `jsx-a11y` rules for the vendored primitives — editing those files to satisfy the linter would be undone by the next `shadcn add`.
 - **oxfmt** — config at `.oxfmtrc.json` (repo root, defaults only plus an ignore for `.agents/**`). It runs repo-wide from the root rather than per-package, honours `.gitignore`, and formats JSON and Markdown alongside TS/TSX — a wider net than the Prettier glob it replaced, which covered only `**/*.{ts,tsx,md}`.
 
 oxfmt is pre-1.0 (`0.62.0`). Its output can shift between minor releases, so a version bump may reformat the repo; bump it on its own commit to keep that churn out of feature diffs.
@@ -46,6 +49,7 @@ oxfmt is pre-1.0 (`0.62.0`). Its output can shift between minor releases, so a v
 - `next build` type-checks by invoking the project-local `tsc` CLI (`experimental.useTypeScriptCli`, which defaults to `true` in Next 16.3). Setting it to `false` reverts to the JS API and will break under TS 7.
 - `apps/web`'s `check-types` runs `next typegen && tsc --noEmit`. The typegen step is required — standalone `tsc` fails with `Cannot find name 'LayoutProps'` on a clean tree, since those types are generated into `.next/types`.
 - `@types/node` tracks the **Node 24** runtime, not the newest release line. Bumping it past the installed Node major would advertise APIs that don't exist at runtime.
+- **Vitest 4** — `vitest --typecheck` was the open question when the runner went in, since it shells out to the `tsc` CLI and TS 7 is the native Go compiler. It works: verified on Vitest 4.1.10 with tsgo 7.0.2, errors reported at the right file, line and column. The mode is still experimental, so pin Vitest if `*.test-d.ts` files are added. Also: `vitest/config` re-exports only the config helpers, so `loadEnv` comes from `vite` directly.
 - ESLint 10 is unusable here for a reason worth remembering if it ever comes back: `eslint-plugin-react@7.37.5` (latest) crashes on it with `contextOrFilename.getFilename is not a function`.
 
 ## Next.js
