@@ -84,6 +84,12 @@ export type RunTurnOptions = {
    * thought across a tool call.
    */
   onWarnings?: (warnings: unknown[]) => void;
+  /**
+   * Turns a thrown error into the text the client is shown, and is the only
+   * place a failed turn can be logged. Anything thrown inside the loop or on a
+   * merged step's stream arrives here.
+   */
+  onError?: (error: unknown) => string;
 };
 
 /**
@@ -105,8 +111,21 @@ export function runTurn({
   tools = {},
   abortSignal,
   onWarnings = defaultOnWarnings,
+  onError = defaultOnError,
 }: RunTurnOptions): ReadableStream<UIMessageChunk> {
   return createUIMessageStream({
+    // Without this the SDK's default swallows the cause: the client gets a
+    // generic string and the server logs nothing at all, so a missing API key,
+    // an unknown model id, a rate limit and a malformed history are one
+    // indistinguishable failure. The text the client sees stays deliberately
+    // vague — it reaches a browser — but the cause has to land somewhere.
+    onError,
+    // The client re-posts the whole history, so on a resume its last message is
+    // the assistant message holding the unfulfilled tool call. Passing it means
+    // the stream continues that message instead of starting a second one, which
+    // would split one turn into two bubbles and strand the tool part. Today the
+    // last message is always a user message and a fresh id is minted either way.
+    originalMessages: messages,
     async execute({ writer }) {
       // Rebuilt from the request, never held here. `ignoreIncompleteToolCalls`
       // stays off: on a resume it would discard the very call being resumed.
@@ -143,6 +162,14 @@ export function runTurn({
             tools,
             sendStart: step === 0,
             sendFinish: false,
+            // The merge needs its own handler, and it is the one that sees the
+            // *real* failure. An error on a step's stream becomes an error chunk
+            // here, after which the loop's own await rejects with
+            // `NoOutputGeneratedError` — so the stream-level handler gets a
+            // wrapper saying "check the stream for errors" and nothing about the
+            // 401 behind it. Left unset this one would also emit the SDK's
+            // default text, masking ours on the wire.
+            onError,
           }),
         );
 
@@ -226,4 +253,15 @@ function toolResultMessage(toolCallId: string, toolName: string, output: JSONVal
 
 function defaultOnWarnings(warnings: unknown[]) {
   console.warn("[agent] model warnings", warnings);
+}
+
+/**
+ * The cause goes to the server log; the client gets a sentence it can render.
+ *
+ * Deliberately not the provider's message — that can carry request details, and
+ * this string is handed to a browser.
+ */
+function defaultOnError(error: unknown): string {
+  console.error("[agent] turn failed", error);
+  return "The agent could not finish that turn. Try again.";
 }

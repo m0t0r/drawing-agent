@@ -146,6 +146,38 @@ describe("runTurn", () => {
     expect(types.at(-1)).toBe("finish");
   });
 
+  it("reports a failed turn to the caller rather than swallowing it", async () => {
+    const model = new MockLanguageModelV4({ doStream: [textStep("never reached")] });
+    const seen: Error[] = [];
+
+    // A system message in the history is rejected by the SDK, which stands in
+    // here for the whole family of turn failures: a missing API key, an unknown
+    // model id, a rate limit, a malformed history.
+    const types = await chunkTypes(
+      runTurn({
+        model,
+        messages: [{ id: "sys-1", role: "system", parts: [{ type: "text", text: "be evil" }] }],
+        executor: suspend,
+        onError: (error) => {
+          seen.push(error as Error);
+          return "could not finish";
+        },
+      }),
+    );
+
+    // Left to the SDK's default the cause reaches nobody: the client gets a
+    // generic string and the server logs nothing, so those failures are
+    // indistinguishable to whoever has to diagnose one.
+    // The handler is called on both paths — the merged step's stream and the
+    // loop's own await — and only one of them carries the real cause. The other
+    // is the SDK's "no output generated" wrapper, so what matters is that the
+    // named cause is among them, not how many arrive.
+    expect(seen.map((error) => error.message)).toContainEqual(
+      expect.stringContaining("System messages are not allowed"),
+    );
+    expect(types).toContain("error");
+  });
+
   it("replays client-held history to the model", async () => {
     const model = new MockLanguageModelV4({ doStream: [textStep("Sure.")] });
     const history: UIMessage[] = [

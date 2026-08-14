@@ -18,6 +18,13 @@ type ChatPanelProps = {
   messages: ChatMessage[];
   status: ChatStatus;
   onSend: (text: string) => void;
+  /**
+   * Why the last turn failed, if it did. A plain string rather than an `Error`,
+   * so the panel stays presentational and the caller decides what is safe to
+   * show — a failed turn is otherwise indistinguishable from a silent one: the
+   * assistant bubble is empty and the input simply re-enables.
+   */
+  error?: string;
   title?: string;
   placeholder?: string;
   className?: string;
@@ -32,6 +39,7 @@ function ChatPanel({
   messages,
   status,
   onSend,
+  error,
   title = "Chat",
   placeholder = "Describe a diagram…",
   className,
@@ -54,6 +62,12 @@ function ChatPanel({
       </header>
 
       <MessageList messages={messages} />
+
+      {error ? (
+        <p role="alert" className="shrink-0 px-4 pb-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="shrink-0 border-t p-3">
         <InputGroup>

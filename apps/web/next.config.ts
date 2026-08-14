@@ -7,8 +7,9 @@ import type { NextConfig } from "next";
  * unless the `dev` task declares it. Reading the file here sidesteps both, and
  * `process.loadEnvFile` is built into Node 24, so it costs no dependency.
  *
- * Missing is not fatal: `next dev` should still boot without a key, and fail at
- * the first request with the provider's own message rather than at startup.
+ * Missing is not fatal: `next dev` still boots without a key, and the first
+ * message fails as a turn rather than at startup — the cause on the server log,
+ * a short notice in the chat panel.
  */
 try {
   process.loadEnvFile(new URL("../../.env", import.meta.url));

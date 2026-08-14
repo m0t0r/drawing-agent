@@ -21,7 +21,7 @@ export function ChatSidebar() {
   // with `Math.random()` during render, and Cache Components refuses to prerender
   // an unstable value in a Client Component. There is only ever one conversation
   // on this page, and it does not survive a reload, so a constant is honest.
-  const { messages, sendMessage, status } = useChat({ id: "drawing-agent" });
+  const { messages, sendMessage, status, error } = useChat({ id: "drawing-agent" });
 
   function handleSend(text: string) {
     sendMessage({ text });
@@ -32,6 +32,9 @@ export function ChatSidebar() {
       messages={toChatMessages(messages)}
       status={status}
       onSend={handleSend}
+      // The turn's own explanation, which the loop already keeps deliberately
+      // vague because it reaches a browser; the cause is on the server log.
+      error={error?.message}
       title="Drawing agent"
     />
   );
