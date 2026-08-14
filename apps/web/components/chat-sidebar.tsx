@@ -3,6 +3,7 @@
 import { ChatPanel } from "@repo/design-system/components/chat/chat-panel";
 import type { ChatMessage } from "@repo/design-system/components/chat/types";
 import { useState } from "react";
+import { applyAddElements } from "../lib/canvas-adapter";
 import { useExcalidraw } from "./excalidraw-provider";
 
 const SEED_MESSAGES: ChatMessage[] = [
@@ -32,7 +33,7 @@ const SEED_MESSAGES: ChatMessage[] = [
  * `<ChatPanel>` stays untouched.
  */
 export function ChatSidebar() {
-  const { api, drawElements } = useExcalidraw();
+  const { api } = useExcalidraw();
   const [messages, setMessages] = useState<ChatMessage[]>(SEED_MESSAGES);
 
   async function handleSend(text: string) {
@@ -51,17 +52,21 @@ export function ChatSidebar() {
       },
     ]);
 
-    await drawElements([
-      {
-        type: "rectangle",
-        x: 100,
-        y: 100,
-        width: 240,
-        height: 120,
-        label: { text },
-      },
-    ]);
-    api?.scrollToContent(undefined, { fitToContent: true });
+    if (!api) return;
+
+    await applyAddElements(api, {
+      elements: [
+        {
+          type: "rectangle",
+          x: 100,
+          y: 100,
+          width: 240,
+          height: 120,
+          label: { text },
+        },
+      ],
+    });
+    api.scrollToContent(undefined, { fitToContent: true });
   }
 
   return <ChatPanel messages={messages} status="ready" onSend={handleSend} title="Drawing agent" />;
