@@ -13,7 +13,7 @@
  *    attribute, and CJS named-export interop — bundler-legal, Node-illegal. A
  *    bundler is a hard requirement; the configs pass `server.deps.inline` so
  *    Vite processes it rather than handing it to Node's resolver.
- * 2. **It then reads browser globals at import time.** These six are the whole
+ * 2. **It then reads browser globals at import time.** These five are the whole
  *    set; each is here because removing it produces a crash. `FontFace` is the
  *    trap — it is read at *call* time, from inside conversion, so a shim built
  *    by "import it and see what breaks" misses it.

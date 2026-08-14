@@ -25,7 +25,7 @@ The `exports` map also reserves `./scorers/*` (pure functions over the final ele
 `convertToExcalidrawElements` does **not** run in a bare Node process, and the reasons are worth knowing before you touch a Vitest config. Both were measured; the workings are in [`docs/research/excalidraw-skeleton-conversion.md`](../../docs/research/excalidraw-skeleton-conversion.md).
 
 - `@excalidraw/excalidraw@0.18.1` publishes a bundle only a bundler can load. Node's resolver rejects it three times over before any Excalidraw code runs. Hence `server.deps.inline` in both configs — without it Vitest externalises the package and hands it to Node.
-- It then reads browser globals at import time. `src/canvas/headless-environment.ts` supplies the six it needs, in about 25 lines. No jsdom, no `node-canvas`. It is a `setupFiles` entry so it lands before the import; `FontFace` in particular is read at _call_ time, from inside conversion, so a shim built by "import it and see what breaks" misses it.
+- It then reads browser globals at import time. `src/canvas/headless-environment.ts` supplies the five it needs, in about 25 lines. No jsdom, no `node-canvas`. It is a `setupFiles` entry so it lands before the import; `FontFace` in particular is read at _call_ time, from inside conversion, so a shim built by "import it and see what breaks" misses it.
 
 Both settings live in `vitest.shared.ts` so the test and eval configs cannot drift on them.
 
